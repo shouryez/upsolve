@@ -1,9 +1,9 @@
 import Link from "next/link";
-import { ButtonArrow, Logo, Starfield, buttonClasses } from "@upsolve/ui";
+import { ButtonArrow, Logo, Stacky, Starfield, buttonClasses } from "@upsolve/ui";
 import { Meteors } from "@/components/fx/decor";
 import { DecodeText } from "@/components/fx/text";
 
-/** Site-wide 404: chrome numerals that decode on load, a verdict chip, meteors. */
+/** Site-wide 404: Stacky thinking it over, chrome numerals that decode on load, a verdict chip, meteors. */
 export default function NotFound() {
   return (
     <div className="relative grid min-h-dvh place-items-center overflow-hidden bg-[#08080d] px-4 text-white">
@@ -17,6 +17,7 @@ export default function NotFound() {
         <Link href="/" aria-label="DsaKaro home" className="mb-10 text-white">
           <Logo />
         </Link>
+        <Stacky mood="thinking" size={120} className="-mt-4 mb-4" />
         <span className="mb-4 inline-flex h-7 items-center gap-2 rounded-full border border-[#ff5a78]/40 bg-[#ff5a78]/12 px-3 font-mono text-12 text-[#ff8aa0]">
           <span className="size-1.5 rounded-full bg-current" /> Verdict: 404 Not Found
         </span>

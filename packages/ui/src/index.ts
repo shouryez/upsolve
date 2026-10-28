@@ -29,6 +29,8 @@ export type { ProblemStatus, TagProps, TagTone, Verdict } from "./components/tag
 export { ThemeToggle } from "./components/theme";
 export { THEME_STORAGE_KEY, themeScript } from "./components/theme-script";
 export { EmptyState, ErrorState, Kbd, Skeleton, SkeletonCard } from "./components/feedback";
+export { Stacky, StackyCard } from "./components/stacky";
+export type { StackyMood } from "./components/stacky";
 export { SpotlightTracker } from "./components/spotlight";
 export { Switch, SwitchField } from "./components/switch";
 export type { SwitchProps } from "./components/switch";

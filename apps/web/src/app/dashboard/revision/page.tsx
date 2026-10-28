@@ -147,7 +147,7 @@ async function RevisionContent() {
       {problems.length === 0 ? (
         <Card>
           <EmptyState
-            icon={<RotateCcw size={18} />}
+            mascot="idle"
             title={
               <>
                 Solve something <em>first.</em>
@@ -267,7 +267,7 @@ async function RevisionContent() {
             </CardHeader>
             {left === 0 ? (
               <EmptyState
-                icon={<CircleCheck size={18} />}
+                mascot={queue.reviewedToday > 0 ? "accepted" : "sleepy"}
                 title={
                   queue.reviewedToday > 0 ? (
                     <>

@@ -555,7 +555,7 @@ async function Overview() {
           ) : (
             <EmptyState
               className="flex-1 py-4"
-              icon={<RotateCcw size={18} />}
+              mascot={learning.length === 0 ? "sleepy" : "accepted"}
               title={
                 learning.length === 0 ? (
                   <>
@@ -792,7 +792,7 @@ async function Overview() {
           </CardHeader>
           {recent.length === 0 ? (
             <EmptyState
-              icon={<History size={18} />}
+              mascot="idle"
               title={
                 <>
                   No solves <em>yet.</em>

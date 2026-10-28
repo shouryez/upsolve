@@ -25,6 +25,7 @@ import {
   SegmentedProgress,
   SkeletonCard,
   SpotlightTracker,
+  StackyCard,
   Starfield,
   StatusBadge,
   StrengthLadder,
@@ -680,6 +681,24 @@ export default function Styleguide() {
                 Something broke loading this card.
               </ErrorState>
             </Card>
+          </div>
+        </Section>
+
+        <Section title="Mascot">
+          <p className="max-w-[70ch] text-14 text-ink-2">
+            Stacky: a stack of clay plates with the logo&apos;s ring nodes for eyes and the lime top
+            pointer on its head. Pass <code className="font-mono text-12">mascot</code> to
+            EmptyState or ErrorState, or render <code className="font-mono text-12">Stacky</code>{" "}
+            directly.
+          </p>
+          <div className="grid grid-cols-2 gap-3.5 sm:grid-cols-4 lg:grid-cols-7">
+            <StackyCard mood="idle">idle · nothing yet</StackyCard>
+            <StackyCard mood="accepted">accepted · all caught up</StackyCard>
+            <StackyCard mood="due">due · revision waiting</StackyCard>
+            <StackyCard mood="streak">streak</StackyCard>
+            <StackyCard mood="thinking">thinking · no match, errors</StackyCard>
+            <StackyCard mood="sleepy">sleepy · nothing due today</StackyCard>
+            <StackyCard mood="celebrate">celebrate · sheet complete</StackyCard>
           </div>
         </Section>
       </main>

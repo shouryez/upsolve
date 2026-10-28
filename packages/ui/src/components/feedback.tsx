@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { cn } from "../cn";
+import { Stacky, type StackyMood } from "./stacky";
 
 /** Pixel-shimmer placeholder. Give it the size and radius of the content it stands in for. */
 export function Skeleton({ className }: { className?: string }) {
@@ -61,17 +62,19 @@ function PixelHalo() {
 }
 
 /**
- * Designed empty state: pixel illustration, a title (pass an <em> for the serif accent),
- * one sentence, and one action (a real link or button).
+ * Designed empty state: pixel illustration (or Stacky, when `mascot` is set), a title
+ * (pass an <em> for the serif accent), one sentence, and one action (a real link or button).
  */
 export function EmptyState({
   icon,
+  mascot,
   title,
   children,
   action,
   className,
 }: {
-  icon: ReactNode;
+  icon?: ReactNode;
+  mascot?: StackyMood;
   title: ReactNode;
   children?: ReactNode;
   action?: ReactNode;
@@ -79,12 +82,16 @@ export function EmptyState({
 }) {
   return (
     <div className={cn("flex flex-col items-center px-4 py-8 text-center", className)}>
-      <span aria-hidden="true" className="relative mb-5 grid size-[86px] place-items-center">
-        <PixelHalo />
-        <span className="relative grid size-11 place-items-center rounded-[13px] border border-line-2 bg-surface-2 text-ink-2 shadow-e2">
-          {icon}
+      {mascot ? (
+        <Stacky mood={mascot} size={96} className="mb-4" />
+      ) : (
+        <span aria-hidden="true" className="relative mb-5 grid size-[86px] place-items-center">
+          <PixelHalo />
+          <span className="relative grid size-11 place-items-center rounded-[13px] border border-line-2 bg-surface-2 text-ink-2 shadow-e2">
+            {icon}
+          </span>
         </span>
-      </span>
+      )}
       <p className="text-16 font-[600] tracking-[-0.015em] [&_em]:font-display [&_em]:text-[1.15em] [&_em]:font-normal">
         {title}
       </p>
@@ -96,20 +103,23 @@ export function EmptyState({
   );
 }
 
-/** Friendly error card with the verdict joke and a retry slot. */
+/** Friendly error card with the verdict joke and a retry slot; `mascot` puts Stacky on top. */
 export function ErrorState({
   title = "Wrong answer.",
+  mascot,
   children,
   action,
   className,
 }: {
   title?: ReactNode;
+  mascot?: StackyMood;
   children?: ReactNode;
   action?: ReactNode;
   className?: string;
 }) {
   return (
     <div className={cn("flex flex-col items-center px-4 py-10 text-center", className)}>
+      {mascot && <Stacky mood={mascot} size={110} className="mb-4" />}
       <span className="mb-4 inline-flex h-6 items-center gap-1.5 rounded-full border border-v-wa/30 bg-v-wa/12 px-2.5 font-mono text-11 text-v-wa">
         <span className="size-1.5 rounded-full bg-current" /> Verdict: WA
       </span>

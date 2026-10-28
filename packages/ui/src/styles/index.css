@@ -867,3 +867,155 @@
     transform: rotate(14deg);
   }
 }
+
+/* ---- Stacky, the mascot (packages/ui/src/components/stacky.tsx) ---- */
+.stacky
+  :is(
+    .stacky-float,
+    .stacky-bounce,
+    .stacky-wobble,
+    .stacky-breathe,
+    .stacky-tilt,
+    .stacky-flame,
+    .stacky-drop,
+    .stacky-pulse,
+    .stacky-twinkle,
+    .stacky-z
+  ) {
+  transform-box: fill-box;
+}
+.stacky-float {
+  animation: stacky-float 3.2s var(--ease-in-out) infinite alternate;
+}
+.stacky-bounce {
+  transform-origin: 50% 100%;
+  animation: stacky-bounce 1.6s var(--ease-out) infinite;
+}
+.stacky-wobble {
+  transform-origin: 50% 100%;
+  animation: stacky-wobble 2.8s var(--ease-in-out) infinite;
+}
+.stacky-breathe {
+  transform-origin: 50% 100%;
+  animation: stacky-breathe 4s var(--ease-in-out) infinite alternate;
+}
+.stacky-tilt {
+  transform-origin: 50% 100%;
+  transform: rotate(4deg);
+}
+.stacky-flame {
+  transform-origin: 50% 100%;
+  animation: flame 1.6s ease-in-out infinite;
+}
+.stacky-drop {
+  animation: stacky-drop 2.4s var(--ease-spring) infinite;
+}
+.stacky-pulse {
+  transform-origin: center;
+  animation: stacky-pulse 1.6s var(--ease-in-out) infinite;
+}
+.stacky-twinkle {
+  transform-origin: center;
+  animation: stacky-twinkle 2.4s ease-in-out infinite;
+}
+.stacky-z {
+  animation: stacky-z 3s ease-in-out infinite;
+}
+.stacky-still,
+.stacky-still * {
+  animation: none !important;
+}
+/* Still pose, not the last frame: the global rule would leave the z's faded out. */
+@media (prefers-reduced-motion: reduce) {
+  .stacky,
+  .stacky * {
+    animation: none !important;
+  }
+}
+@keyframes stacky-float {
+  to {
+    transform: translateY(-5px);
+  }
+}
+@keyframes stacky-bounce {
+  0%,
+  80%,
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
+  15% {
+    transform: translateY(0) scale(1.04, 0.95);
+  }
+  40% {
+    transform: translateY(-10px) scale(0.98, 1.03);
+  }
+  62% {
+    transform: translateY(0) scale(1.02, 0.98);
+  }
+}
+@keyframes stacky-wobble {
+  0%,
+  100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-2.5deg);
+  }
+  75% {
+    transform: rotate(2.5deg);
+  }
+}
+@keyframes stacky-breathe {
+  to {
+    transform: scale(1.015, 0.985);
+  }
+}
+@keyframes stacky-drop {
+  0% {
+    transform: translateY(-34px);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  40%,
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+@keyframes stacky-pulse {
+  0%,
+  100% {
+    transform: scale(0.9);
+    opacity: 0.65;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+@keyframes stacky-twinkle {
+  0%,
+  100% {
+    transform: scale(0.6);
+    opacity: 0.4;
+  }
+  50% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes stacky-z {
+  0% {
+    transform: translate(0, 4px);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate(6px, -10px);
+    opacity: 0;
+  }
+}

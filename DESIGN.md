@@ -50,6 +50,23 @@ A tick drawn through graph nodes: a thick ink stroke with two hollow nodes at it
 - Lime pixel is always lime, even in light mode.
 - Clear space = one pixel width on all sides.
 
+### Mascot
+
+**Stacky**: a stack of three clay plates (the stack data structure) with a face on the top block. Its hollow ring eyes are the logo's graph nodes, and the lime bulb on its head is the stack's **top pointer**. It is shaded with SVG gradients to look 3D, with no WebGL, and moves with transform/opacity only; under reduced motion it holds still. Source: `packages/ui/src/components/stacky.tsx`; every mood is on `/styleguide`.
+
+| Mood        | Use                                             |
+| ----------- | ----------------------------------------------- |
+| `idle`      | Nothing yet (first-run empty states)            |
+| `accepted`  | All caught up, a solve landed                   |
+| `due`       | A revision is waiting (bulb pulses)             |
+| `streak`    | Streak moments (holds the ember flame)          |
+| `thinking`  | No search match, errors, 404                    |
+| `sleepy`    | Nothing due today                               |
+| `celebrate` | Sheet complete (`push()`: a plate lands on top) |
+
+- Use it through `EmptyState`/`ErrorState`'s `mascot` prop, at most one Stacky per view.
+- Its colours are fixed in both themes, like the logo's lime node. Lime stays on the bulb; ember appears only with `streak`.
+
 ### Voice
 
 - Short, direct, a bit dry. Talk like a senior who has already been through placements.

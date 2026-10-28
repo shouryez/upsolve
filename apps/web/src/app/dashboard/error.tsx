@@ -20,6 +20,7 @@ export default function DashboardError({
     <div className="grid min-h-[60vh] place-items-center">
       <div className="surface-card w-full max-w-[520px] rounded-[24px]">
         <ErrorState
+          mascot="thinking"
           action={
             <div className="flex flex-wrap justify-center gap-2">
               <Button variant="signal" size="sm" onClick={reset}>

@@ -67,7 +67,7 @@ async function Results({
       {empty ? (
         <Card>
           <EmptyState
-            icon={<Check size={18} />}
+            mascot="thinking"
             title={
               <>
                 Nothing <em>matches.</em>
