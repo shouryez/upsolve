@@ -5,7 +5,9 @@ import { Check, Crosshair, RotateCcw, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button, cn } from "@upsolve/ui";
 import { answerDrill, dropDrill, startDrill } from "@/app/actions/drills";
+import { CodeView, LineDiff } from "@/components/code-view";
 import { BUG_CLASSES } from "@/lib/bug-classes";
+import { diffRange } from "@/lib/highlight";
 import type { DrillReveal, PublicDrill } from "@/lib/drills";
 
 const DRILL_MS = 90_000;
@@ -85,71 +87,70 @@ export function SpotYourBug({ initial }: { initial: PublicDrill | null }) {
     );
   }
 
-  const lines = drill.code.split("\n");
   const urgent = !reveal && left <= 15_000;
+  const bugText = reveal ? (drill.code.split("\n")[reveal.bugLine - 1] ?? "") : "";
+  const indent = bugText.length - bugText.trimStart().length;
+  const changed = reveal?.was ? diffRange(reveal.now, reveal.was) : null;
 
   return (
     <div className="flex flex-col gap-3">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
-        <p className="text-13 text-ink-2">
-          <span className="font-[650] text-ink">{drill.title}</span>
-          {drill.language ? ` · ${drill.language}` : ""}
-        </p>
-        {!reveal && (
-          <span
-            className={cn("tnum font-mono text-14 font-[650]", urgent ? "text-bad" : "text-ink")}
-            aria-live={urgent ? "polite" : "off"}
-          >
-            {Math.ceil(left / 1000)} s
-          </span>
-        )}
-      </div>
+      <p className="text-13 text-ink-2">
+        <span className="font-[650] text-ink">{drill.title}</span>
+        {reveal ? "" : ". One line is broken. Tap it."}
+      </p>
       {drill.failingInput && (
-        <div>
-          <p className="text-[11px] text-ink-3">Fails on</p>
-          <pre className="max-h-24 overflow-auto rounded-[8px] bg-surface-2 px-2 py-1 font-mono text-[11.5px] whitespace-pre-wrap">
-            {drill.failingInput}
-          </pre>
+        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1 rounded-[10px] border border-line px-3 py-2">
+          <span className="flex items-center gap-1.5 text-[11px] text-ink-3">
+            <span className="size-1.5 rounded-full bg-bad" aria-hidden="true" />
+            Fails on
+          </span>
+          <code className="font-mono text-[12px] break-all">{drill.failingInput}</code>
         </div>
       )}
 
-      <div
-        role="group"
-        aria-label="The code. Pick the line with the bug."
-        className="overflow-x-auto rounded-[12px] bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] py-1.5 font-mono text-[12.5px] leading-[1.55] shadow-[inset_0_0_0_1px_var(--line)] [scrollbar-width:thin]"
-      >
-        <div className="w-max min-w-full">
-          {lines.map((l, i) => {
-            const n = i + 1;
-            const isBug = reveal && n === reveal.bugLine;
-            const wrongPick = reveal && n === reveal.pickedLine && !reveal.correct;
-            const blank = !l.trim();
-            return (
-              <button
-                key={n}
-                type="button"
-                disabled={Boolean(reveal) || pending || blank}
-                aria-pressed={picked === n}
-                aria-label={`Line ${n}`}
-                onClick={() => setPicked(n)}
-                className={cn(
-                  "flex min-h-[28px] w-full items-center gap-3 px-3 text-left transition-colors",
-                  !reveal && !blank && "hover:bg-[color-mix(in_srgb,var(--ink)_6%,transparent)]",
-                  !reveal && picked === n && "bg-[color-mix(in_srgb,var(--signal)_22%,transparent)]",
-                  isBug &&
-                    (reveal.correct
-                      ? "bg-[color-mix(in_srgb,var(--ok)_20%,transparent)]"
-                      : "bg-[color-mix(in_srgb,var(--bad)_18%,transparent)]"),
-                  wrongPick && "bg-[color-mix(in_srgb,var(--ink)_10%,transparent)] line-through",
-                )}
-              >
-                <span className="w-6 shrink-0 text-right text-ink-4 select-none">{n}</span>
-                <code className="whitespace-pre">{l || " "}</code>
-              </button>
-            );
-          })}
-        </div>
-      </div>
+      <CodeView
+        code={drill.code}
+        lang={drill.language}
+        picked={picked}
+        onPick={setPicked}
+        pickDisabled={Boolean(reveal) || pending}
+        focus={Boolean(reveal)}
+        struck={reveal && !reveal.correct ? reveal.pickedLine : null}
+        bug={
+          reveal
+            ? {
+                line: reveal.bugLine,
+                label: reveal.correct ? "found it" : BUG_CLASSES[reveal.bugClass].label,
+                tone: reveal.correct ? "ok" : "bad",
+                chars: changed
+                  ? { start: changed.start + indent, end: changed.endA + indent }
+                  : undefined,
+              }
+            : undefined
+        }
+        aside={
+          !reveal ? (
+            <span
+              className={cn(
+                "flex items-center gap-2 font-mono text-[12px] font-[650] tabular-nums",
+                urgent ? "text-bad" : "text-ink-2",
+              )}
+              aria-live={urgent ? "polite" : "off"}
+            >
+              <span className="hidden h-1 w-16 overflow-hidden rounded-full bg-surface-3 sm:block">
+                <span
+                  className={cn(
+                    "block h-full rounded-full transition-[width] duration-300 ease-linear",
+                    urgent ? "bg-bad" : "bg-[var(--sky)]",
+                  )}
+                  style={{ width: `${(left / DRILL_MS) * 100}%` }}
+                />
+              </span>
+              {Math.ceil(left / 1000)} s
+            </span>
+          ) : null
+        }
+      />
 
       {!reveal ? (
         <div className="flex flex-wrap items-center gap-2">
@@ -169,6 +170,7 @@ export function SpotYourBug({ initial }: { initial: PublicDrill | null }) {
       ) : (
         <RevealPanel
           reveal={reveal}
+          language={drill.language}
           pending={pending}
           onNext={next}
           onDrop={() =>
@@ -192,11 +194,13 @@ export function SpotYourBug({ initial }: { initial: PublicDrill | null }) {
 
 function RevealPanel({
   reveal,
+  language,
   pending,
   onNext,
   onDrop,
 }: {
   reveal: DrillReveal;
+  language: string | null;
   pending: boolean;
   onNext: () => void;
   onDrop: () => void;
@@ -226,18 +230,7 @@ function RevealPanel({
         <span className="text-12 font-[500] text-ink-3">{meta.label}</span>
       </p>
       <p className="text-13 text-ink-2">{reveal.explanation}</p>
-      {reveal.was && (
-        <div className="grid gap-1 font-mono text-[12px]">
-          <p className="flex gap-2">
-            <span className="w-14 shrink-0 font-sans text-[11px] text-ink-3">yours</span>
-            <code className="overflow-x-auto whitespace-pre">{reveal.was}</code>
-          </p>
-          <p className="flex gap-2">
-            <span className="w-14 shrink-0 font-sans text-[11px] text-ink-3">broken</span>
-            <code className="overflow-x-auto whitespace-pre text-bad">{reveal.now}</code>
-          </p>
-        </div>
-      )}
+      {reveal.was && <LineDiff broken={reveal.now} fixed={reveal.was} lang={language} />}
       <p className="text-12 text-ink-3">
         <span className="font-[600] text-ink-2">Next time:</span> {meta.advice}
       </p>

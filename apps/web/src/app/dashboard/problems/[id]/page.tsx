@@ -364,7 +364,7 @@ async function ProblemContent({
           </Card>
 
           {findings.length > 0 && (
-            <Card className="p-[22px]">
+            <Card className="scroll-mt-20 p-[22px]" id="bug-autopsy">
               <CardHeader>
                 <CardTitle>Bug autopsy</CardTitle>
                 <CardSub>

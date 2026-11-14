@@ -60,11 +60,22 @@ export async function getProblemFindings(userId: string, problemId: string): Pro
   return rows.map(toFinding).filter((f): f is Finding => f !== null);
 }
 
+export type ProblemBugs = {
+  problemId: string | null;
+  title: string;
+  fails: { submissionId: string; verdict: string; bugClass: BugClass; at: number }[];
+  /** You have an accepted submission for it. */
+  solved: boolean;
+  last: number;
+};
+
 export type BugProfile = {
   total: number;
   /** Per class, most frequent first: all time and in the last 30 days. */
   classes: { bugClass: BugClass; count: number; recent: number }[];
   recent: Finding[];
+  /** Problem by problem: every autopsied failure, oldest first, and whether you got it later. */
+  problems: ProblemBugs[];
   /** Failed submissions with code that haven't been examined yet (AI off or pending). */
   pending: number;
 };
@@ -73,7 +84,7 @@ export async function getBugProfile(userId: string, now: number): Promise<BugPro
   "use cache";
   cacheTag(userTag(userId));
   cacheLife("minutes");
-  const [rows, pending] = await Promise.all([
+  const [rows, pending, solvedRows] = await Promise.all([
     db().execute(sql`
       ${SELECT}
       where bf.user_id = ${userId}
@@ -83,7 +94,17 @@ export async function getBugProfile(userId: string, now: number): Promise<BugPro
       join submissions s on s.id = sc.submission_id
       where sc.user_id = ${userId} and s.verdict in ('WA', 'TLE', 'RE', 'MLE')
         and not exists (select 1 from bug_findings bf where bf.submission_id = sc.submission_id)`),
+    db().execute(sql`
+      select distinct pp.problem_id as id from submissions s
+      join platform_problems pp on pp.id = s.platform_problem_id
+      where s.user_id = ${userId} and s.verdict = 'AC' and pp.problem_id is not null
+        and pp.problem_id in (
+          select pp2.problem_id from bug_findings bf
+          join submissions s2 on s2.id = bf.submission_id
+          join platform_problems pp2 on pp2.id = s2.platform_problem_id
+          where bf.user_id = ${userId})`),
   ]);
+  const solved = new Set((solvedRows as unknown as { id: string }[]).map((r) => r.id));
   const findings = (rows as unknown as Row[])
     .map(toFinding)
     .filter((f): f is Finding => f !== null);
@@ -95,8 +116,28 @@ export async function getBugProfile(userId: string, now: number): Promise<BugPro
     if (f.at >= since) c.recent++;
     by.set(f.bugClass, c);
   }
+  const byProblem = new Map<string, ProblemBugs>();
+  for (const f of findings) {
+    const key = f.problemId ?? `t:${f.title}`;
+    const p = byProblem.get(key) ?? {
+      problemId: f.problemId,
+      title: f.title,
+      fails: [],
+      solved: f.problemId ? solved.has(f.problemId) : false,
+      last: f.at,
+    };
+    p.fails.unshift({
+      submissionId: f.submissionId,
+      verdict: f.verdict,
+      bugClass: f.bugClass,
+      at: f.at,
+    });
+    p.last = Math.max(p.last, f.at);
+    byProblem.set(key, p);
+  }
   return {
     total: findings.length,
+    problems: [...byProblem.values()].sort((a, b) => b.last - a.last).slice(0, 30),
     classes: [...by]
       .map(([bugClass, c]) => ({ bugClass, ...c }))
       .sort((a, b) => b.count - a.count || b.recent - a.recent),

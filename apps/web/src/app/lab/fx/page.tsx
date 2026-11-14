@@ -10,6 +10,8 @@ import { PracticeCalendar, type CalDay } from "@/components/practice-calendar";
 import { deriveBadges } from "@/lib/badges";
 import { ProofItStuck } from "@/components/proof-it-stuck";
 import { SpotYourBug } from "@/components/spot-your-bug";
+import { FindingCard } from "@/components/bug-autopsy";
+import { CodeView, LineDiff } from "@/components/code-view";
 import { SplitFlapCountdown } from "@/components/fx/split-flap";
 import { CurveHover } from "@/components/memory-curve";
 import { NoteMarkup } from "@/components/note-markup";
@@ -219,6 +221,48 @@ export default function FxLab() {
             code: "class Solution:\n    def minEatingSpeed(self, piles: List[int], h: int) -> int:\n        lo, hi = 1, max(piles)\n        while lo < hi:\n            mid = (lo + hi) // 2\n            hours = sum((p + mid - 1) // mid for p in piles)\n            if hours >= h:\n                hi = mid\n            else:\n                lo = mid + 1\n        return lo",
           }}
         />
+      </Card>
+      <Card className="w-full max-w-[760px] p-[22px]">
+        <CardHeader>
+          <CardTitle>Bug autopsy</CardTitle>
+        </CardHeader>
+        <FindingCard
+          showTitle
+          finding={{
+            submissionId: "00000000-0000-4000-8000-000000000001",
+            problemId: null,
+            title: "Maximum Product Subarray",
+            verdict: "WA",
+            language: "cpp",
+            bugClass: "overflow",
+            corrected: false,
+            explanation:
+              "prod is an int, so multiplying three values of 100000 wraps around before it reaches the long long you return.",
+            line: 4,
+            code: "class Solution {\npublic:\n    long long maxProduct(vector<int>& nums) {\n        int prod = 1; // running product\n        long long best = LLONG_MIN;\n        for (int x : nums) {\n            prod *= x;\n            best = max(best, (long long) prod);\n        }\n        return best;\n    }\n};",
+            failingInput: "nums = [100000, 100000, 100000]",
+            expected: "1000000000000000",
+            actual: "-1530494976",
+            at: Date.UTC(2026, 10, 12),
+          }}
+        />
+      </Card>
+      <Card className="w-full max-w-[760px] p-[22px]">
+        <CardHeader>
+          <CardTitle>Drill reveal</CardTitle>
+        </CardHeader>
+        <div className="flex flex-col gap-3">
+          <CodeView
+            code={
+              "class Solution:\n    def minEatingSpeed(self, piles: List[int], h: int) -> int:\n        lo, hi = 1, max(piles)\n        while lo < hi:\n            mid = (lo + hi) // 2\n            hours = sum((p + mid - 1) // mid for p in piles)\n            if hours >= h:\n                hi = mid\n            else:\n                lo = mid + 1\n        return lo"
+            }
+            lang="python3"
+            focus
+            struck={8}
+            bug={{ line: 7, label: "Wrong comparison", chars: { start: 21, end: 23 } }}
+          />
+          <LineDiff broken="if hours >= h:" fixed="if hours <= h:" lang="python3" />
+        </div>
       </Card>
       <RestDayCard streak={46} tomorrow="2026-11-14" />
       <Card>

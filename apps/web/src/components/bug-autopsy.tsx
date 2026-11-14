@@ -1,55 +1,113 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { Bug } from "lucide-react";
+import Link from "next/link";
+import { Bug, ChevronDown, Lightbulb } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@upsolve/ui";
 import { correctFinding } from "@/app/actions/bugs";
+import { CodeView } from "@/components/code-view";
 import { BUG_CLASSES, type BugClass } from "@/lib/bug-classes";
 import type { Finding } from "@/lib/bug-data";
+import { diffRange } from "@/lib/highlight";
 
-const VERDICT: Record<string, string> = {
-  WA: "Wrong answer",
-  TLE: "Time limit",
-  RE: "Runtime error",
-  MLE: "Memory limit",
+export const VERDICT: Record<string, { label: string; short: string; color: string }> = {
+  WA: { label: "Wrong answer", short: "WA", color: "var(--v-wa)" },
+  TLE: { label: "Time limit", short: "TLE", color: "var(--v-tle)" },
+  RE: { label: "Runtime error", short: "RE", color: "var(--v-err)" },
+  MLE: { label: "Memory limit", short: "MLE", color: "var(--v-tle)" },
 };
 const DATE = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" });
+const CLIP = 400;
+const clip = (v: string) => (v.length > CLIP ? `${v.slice(0, CLIP)}…` : v);
 
-/** A few lines around the bug, the bug's line marked. */
-function Snippet({ code, line }: { code: string; line: number }) {
-  const lines = code.split("\n");
-  const from = Math.max(1, line - 3);
-  const to = Math.min(lines.length, line + 3);
+export function VerdictTag({ verdict }: { verdict: string }) {
+  const v = VERDICT[verdict];
   return (
-    <pre className="overflow-x-auto rounded-[12px] bg-[color-mix(in_srgb,var(--ink)_6%,transparent)] py-2 font-mono text-[12px] leading-[1.6] shadow-[inset_0_0_0_1px_var(--line)] [scrollbar-width:thin]">
-      {lines.slice(from - 1, to).map((l, i) => {
-        const n = from + i;
-        return (
-          <div
-            key={n}
-            className={cn(
-              "flex gap-3 px-3",
-              n === line && "bg-[color-mix(in_srgb,var(--bad)_14%,transparent)]",
-            )}
-          >
-            <span className="w-6 shrink-0 text-right text-ink-4 select-none">{n}</span>
-            <code className="whitespace-pre">{l || " "}</code>
-          </div>
-        );
-      })}
-    </pre>
+    <span
+      title={v?.label ?? verdict}
+      className="rounded-[6px] px-1.5 py-px font-mono text-[10.5px] font-[700]"
+      style={{
+        color: v?.color ?? "var(--ink-2)",
+        background: `color-mix(in srgb, ${v?.color ?? "var(--ink-3)"} 15%, transparent)`,
+      }}
+    >
+      {v?.short ?? verdict}
+    </span>
   );
 }
 
-function Io({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null;
+function IoBox({
+  label,
+  value,
+  mark,
+  tone,
+}: {
+  label: string;
+  value: string;
+  mark?: { start: number; end: number };
+  tone?: "bad" | "ok";
+}) {
+  const v = clip(value);
   return (
     <div className="min-w-0">
-      <p className="text-[11px] text-ink-3">{label}</p>
-      <pre className="max-h-24 overflow-auto rounded-[8px] bg-surface-2 px-2 py-1 font-mono text-[11.5px] whitespace-pre-wrap">
-        {value.length > 400 ? `${value.slice(0, 400)}…` : value}
+      <p className="mb-1 flex items-center gap-1.5 text-[11px] text-ink-3">
+        {tone && (
+          <span
+            className={cn("size-1.5 rounded-full", tone === "bad" ? "bg-bad" : "bg-ok")}
+            aria-hidden="true"
+          />
+        )}
+        {label}
+      </p>
+      <pre className="max-h-28 overflow-auto rounded-[8px] bg-surface-2 px-2 py-1.5 font-mono text-[11.5px] whitespace-pre-wrap [scrollbar-width:thin]">
+        {mark && mark.end > mark.start ? (
+          <>
+            {v.slice(0, mark.start)}
+            <mark
+              className={cn(
+                "rounded-[3px] text-ink",
+                tone === "bad"
+                  ? "bg-[color-mix(in_srgb,var(--bad)_35%,transparent)]"
+                  : "bg-[color-mix(in_srgb,var(--ok)_30%,transparent)]",
+              )}
+            >
+              {v.slice(mark.start, mark.end)}
+            </mark>
+            {v.slice(mark.end)}
+          </>
+        ) : (
+          v
+        )}
       </pre>
+    </div>
+  );
+}
+
+/** Expected against your output, the point where they part marked in both. */
+function TestCase({ finding }: { finding: Finding }) {
+  const { failingInput, expected, actual } = finding;
+  if (!failingInput && !expected && !actual) return null;
+  const d = expected && actual ? diffRange(clip(expected), clip(actual)) : null;
+  return (
+    <div className="grid gap-2 rounded-[12px] border border-line p-2.5 sm:grid-cols-3">
+      {failingInput && <IoBox label="Failing input" value={failingInput} />}
+      {expected && (
+        <IoBox
+          label="Expected"
+          value={expected}
+          tone="ok"
+          mark={d ? { start: d.start, end: d.endA } : undefined}
+        />
+      )}
+      {actual && (
+        <IoBox
+          label="Your output"
+          value={actual}
+          tone="bad"
+          mark={d ? { start: d.start, end: d.endB } : undefined}
+        />
+      )}
     </div>
   );
 }
@@ -57,8 +115,15 @@ function Io({ label, value }: { label: string; value: string | null }) {
 /** One failed submission's autopsy: the bug class, where, why, and the failing test. */
 export function FindingCard({ finding, showTitle }: { finding: Finding; showTitle?: boolean }) {
   const [cls, setCls] = useState<BugClass>(finding.bugClass);
+  const [all, setAll] = useState(false);
   const [pending, start] = useTransition();
   const meta = BUG_CLASSES[cls];
+  const total = finding.code?.split("\n").length ?? 0;
+  const line = finding.line;
+  const short = total <= 14;
+  const from = all || short || !line ? 1 : Math.max(1, line - 3);
+  const to = all || short || !line ? total : Math.min(total, line + 3);
+
   return (
     <article className="surface-inset flex flex-col gap-3 rounded-[16px] p-3.5">
       <header className="flex flex-wrap items-center gap-2">
@@ -66,10 +131,21 @@ export function FindingCard({ finding, showTitle }: { finding: Finding; showTitl
           <Bug size={14} aria-hidden="true" />
         </span>
         <span className="text-14 font-[650]">{meta.label}</span>
+        <VerdictTag verdict={finding.verdict} />
         <span className="text-12 text-ink-3">
-          {showTitle ? `${finding.title} · ` : ""}
-          {VERDICT[finding.verdict] ?? finding.verdict}
-          {finding.line ? ` · line ${finding.line}` : ""} · {DATE.format(finding.at)}
+          {showTitle &&
+            (finding.problemId ? (
+              <Link
+                href={`/dashboard/problems/${finding.problemId}#bug-autopsy`}
+                className="text-ink-2 underline-offset-2 hover:text-ink hover:underline"
+              >
+                {finding.title}
+              </Link>
+            ) : (
+              finding.title
+            ))}
+          {showTitle ? " · " : ""}
+          {DATE.format(finding.at)}
         </span>
         <label className="ml-auto flex items-center gap-1.5 text-11 text-ink-3">
           <span className="sr-only sm:not-sr-only">Not right?</span>
@@ -98,17 +174,44 @@ export function FindingCard({ finding, showTitle }: { finding: Finding; showTitl
           </select>
         </label>
       </header>
+
       <p className="text-13 text-ink-2">{finding.explanation}</p>
-      {finding.code && finding.line && <Snippet code={finding.code} line={finding.line} />}
-      {(finding.failingInput || finding.expected || finding.actual) && (
-        <div className="grid gap-2 sm:grid-cols-3">
-          <Io label="Failing input" value={finding.failingInput} />
-          <Io label="Expected" value={finding.expected} />
-          <Io label="Your output" value={finding.actual} />
-        </div>
+
+      {finding.code && (
+        <CodeView
+          code={finding.code}
+          lang={finding.language}
+          from={from}
+          to={to}
+          bug={line ? { line, label: meta.label } : undefined}
+          aside={
+            !short && line ? (
+              <button
+                type="button"
+                onClick={() => setAll((v) => !v)}
+                className="inline-flex items-center gap-1 text-[11px] text-ink-3 hover:text-ink"
+              >
+                {all ? "Around the bug" : `All ${total} lines`}
+                <ChevronDown
+                  size={12}
+                  className={cn("transition-transform", all && "rotate-180")}
+                  aria-hidden="true"
+                />
+              </button>
+            ) : line ? (
+              <span className="text-[11px] text-ink-3">line {line}</span>
+            ) : null
+          }
+        />
       )}
-      <p className="text-12 text-ink-3">
-        <span className="font-[600] text-ink-2">Next time:</span> {meta.advice}
+
+      <TestCase finding={finding} />
+
+      <p className="flex items-start gap-2 rounded-[10px] bg-[color-mix(in_srgb,var(--amber)_9%,transparent)] px-3 py-2 text-12 text-ink-2">
+        <Lightbulb size={14} className="mt-px shrink-0 text-[var(--amber)]" aria-hidden="true" />
+        <span>
+          <span className="font-[650] text-ink">Next time:</span> {meta.advice}
+        </span>
       </p>
     </article>
   );

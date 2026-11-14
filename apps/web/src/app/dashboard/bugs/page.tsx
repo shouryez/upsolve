@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { revalidateTag } from "next/cache";
 import { after } from "next/server";
-import { ArrowRight, Bug, Crosshair } from "lucide-react";
+import { ArrowRight, Bug, Check, Crosshair } from "lucide-react";
 import { Card, CardHeader, CardSub, CardTitle, SkeletonCard } from "@upsolve/ui";
 import { FindingCard } from "@/components/bug-autopsy";
 import { INSIGHTS_TABS, SectionTabs } from "@/components/orbit/section-tabs";
@@ -11,7 +11,7 @@ import { PageHeader } from "@/components/page-header";
 import { aiEnabled } from "@/lib/ai";
 import { getCurrentUser, isDemoUser } from "@/lib/auth";
 import { BUG_CLASSES } from "@/lib/bug-classes";
-import { getBugProfile } from "@/lib/bug-data";
+import { getBugProfile, type ProblemBugs } from "@/lib/bug-data";
 import { getDrillStats } from "@/lib/drills";
 import { autopsyPending } from "@/lib/autopsy";
 import { userTag } from "@/lib/db";
@@ -153,6 +153,7 @@ async function BugsContent() {
               ))}
             </ul>
           </Card>
+          <ProblemTrails problems={profile.problems} />
           <Card className="col-span-12 p-[22px] xl:col-span-7">
             <CardHeader>
               <CardTitle>Latest autopsies</CardTitle>
@@ -167,5 +168,92 @@ async function BugsContent() {
         </div>
       )}
     </div>
+  );
+}
+
+const VERDICT_COLOR: Record<string, string> = {
+  WA: "var(--v-wa)",
+  TLE: "var(--v-tle)",
+  RE: "var(--v-err)",
+  MLE: "var(--v-tle)",
+};
+const DAY = new Intl.DateTimeFormat("en", { day: "numeric", month: "short" });
+
+/** Problem by problem: each failed try in order, its bug, and whether you got there. */
+function ProblemTrails({ problems }: { problems: ProblemBugs[] }) {
+  if (!problems.length) return null;
+  return (
+    <Card className="order-last col-span-12 p-[22px]">
+      <CardHeader>
+        <CardTitle>Problem by problem</CardTitle>
+        <CardSub>every failed try, in order</CardSub>
+      </CardHeader>
+      <ul className="flex flex-col divide-y divide-line">
+        {problems.map((p) => {
+          const kinds = new Set(p.fails.map((f) => f.bugClass)).size;
+          const title = p.problemId ? (
+            <Link
+              href={`/dashboard/problems/${p.problemId}#bug-autopsy`}
+              className="font-[650] underline-offset-2 hover:underline"
+            >
+              {p.title}
+            </Link>
+          ) : (
+            <span className="font-[650]">{p.title}</span>
+          );
+          return (
+            <li
+              key={p.problemId ?? p.title}
+              className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0 md:flex-row md:items-center md:gap-4"
+            >
+              <div className="min-w-0 md:w-[260px] md:shrink-0">
+                <p className="truncate text-14">{title}</p>
+                <p className="text-12 text-ink-3">
+                  {p.fails.length} failed {p.fails.length === 1 ? "try" : "tries"}
+                  {kinds > 1 ? ` · ${kinds} kinds of bug` : ""} · {DAY.format(p.last)}
+                </p>
+              </div>
+              <ol className="flex flex-wrap items-center gap-y-2" aria-label="Tries in order">
+                {p.fails.map((f, i) => (
+                  <li key={f.submissionId} className="flex items-center">
+                    {i > 0 && <span className="h-px w-3 bg-line-3" aria-hidden="true" />}
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-1 text-[11.5px]"
+                      style={{
+                        background: `color-mix(in srgb, ${VERDICT_COLOR[f.verdict] ?? "var(--ink-3)"} 13%, transparent)`,
+                      }}
+                      title={`${f.verdict} · ${DAY.format(f.at)}`}
+                    >
+                      <span
+                        className="rounded-full px-1.5 font-mono text-[10px] font-[700]"
+                        style={{
+                          color: VERDICT_COLOR[f.verdict] ?? "var(--ink-2)",
+                          background: `color-mix(in srgb, ${VERDICT_COLOR[f.verdict] ?? "var(--ink-3)"} 20%, transparent)`,
+                        }}
+                      >
+                        {f.verdict}
+                      </span>
+                      {BUG_CLASSES[f.bugClass].label}
+                    </span>
+                  </li>
+                ))}
+                <li className="flex items-center">
+                  <span className="h-px w-3 bg-line-3" aria-hidden="true" />
+                  {p.solved ? (
+                    <span className="inline-flex items-center gap-1 rounded-full bg-[color-mix(in_srgb,var(--ok)_16%,transparent)] px-2.5 py-0.5 text-[11.5px] font-[650] text-ok">
+                      <Check size={12} aria-hidden="true" /> Accepted
+                    </span>
+                  ) : (
+                    <span className="rounded-full border border-dashed border-line-3 px-2.5 py-0.5 text-[11.5px] text-ink-3">
+                      not yet
+                    </span>
+                  )}
+                </li>
+              </ol>
+            </li>
+          );
+        })}
+      </ul>
+    </Card>
   );
 }

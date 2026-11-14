@@ -1243,3 +1243,35 @@ li[data-swipe="skip"]::after {
     stroke-dasharray: 0 999;
   }
 }
+
+/* Bug autopsy and Spot your bug: the bug line lights up once, like an editor flagging it. */
+@keyframes bug-flag {
+  0% {
+    background-color: color-mix(in srgb, var(--bad) 42%, transparent);
+  }
+  100% {
+    background-color: color-mix(in srgb, var(--bad) 14%, transparent);
+  }
+}
+@keyframes bug-pin {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-3px);
+  }
+}
+.code-bug-line {
+  background-color: color-mix(in srgb, var(--bad) 14%, transparent);
+  animation: bug-flag 1.1s ease-out both;
+}
+.code-bug-pin {
+  animation: bug-pin 1.6s ease-in-out 3;
+}
+@media (prefers-reduced-motion: reduce) {
+  .code-bug-line,
+  .code-bug-pin {
+    animation: none;
+  }
+}
