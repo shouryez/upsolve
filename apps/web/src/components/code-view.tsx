@@ -94,7 +94,12 @@ export type CodeViewProps = {
   from?: number;
   to?: number;
   /** The bug line: wavy underline, a label pinned to it, the rest dimmed if `focus`. */
-  bug?: { line: number; label?: string; tone?: "bad" | "ok"; chars?: { start: number; end: number } };
+  bug?: {
+    line: number;
+    label?: string;
+    tone?: "bad" | "ok";
+    chars?: { start: number; end: number };
+  };
   focus?: boolean;
   /** A wrong pick, crossed out. */
   struck?: number | null;
@@ -219,7 +224,10 @@ export function CodeView({
             );
             const lineCls = cn(
               "flex min-h-[26px] w-full items-center gap-3 pr-4 pl-2 text-left transition-[opacity,background-color] duration-300",
-              isBug && (tone === "bad" ? "code-bug-line" : "bg-[color-mix(in_srgb,var(--ok)_16%,transparent)]"),
+              isBug &&
+                (tone === "bad"
+                  ? "code-bug-line"
+                  : "bg-[color-mix(in_srgb,var(--ok)_16%,transparent)]"),
               focus && bug && !isBug && "opacity-45",
               struck === n && "opacity-70 [&_code]:line-through [&_code]:decoration-ink-3",
             );
@@ -241,7 +249,9 @@ export function CodeView({
                 className={cn(
                   lineCls,
                   "min-h-[30px] cursor-pointer disabled:cursor-default",
-                  !pickDisabled && !blank && "hover:bg-[color-mix(in_srgb,var(--ink)_7%,transparent)]",
+                  !pickDisabled &&
+                    !blank &&
+                    "hover:bg-[color-mix(in_srgb,var(--ink)_7%,transparent)]",
                   !pickDisabled &&
                     picked === n &&
                     "bg-[color-mix(in_srgb,var(--sky)_20%,transparent)] shadow-[inset_3px_0_0_var(--sky)]",

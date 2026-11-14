@@ -10,6 +10,7 @@ import { PracticeCalendar, type CalDay } from "@/components/practice-calendar";
 import { deriveBadges } from "@/lib/badges";
 import { ProofItStuck } from "@/components/proof-it-stuck";
 import { SpotYourBug } from "@/components/spot-your-bug";
+import { BudgetDemo } from "./budget-demo";
 import { FindingCard } from "@/components/bug-autopsy";
 import { CodeView, LineDiff } from "@/components/code-view";
 import { SplitFlapCountdown } from "@/components/fx/split-flap";
@@ -207,6 +208,15 @@ export default function FxLab() {
             verdict: "stuck",
           }}
         />
+      </Card>
+      <Card className="w-full max-w-[760px] p-[22px]">
+        <CardHeader>
+          <CardTitle>Time budget</CardTitle>
+        </CardHeader>
+        <div className="flex flex-col gap-4">
+          <BudgetDemo initial={105} />
+          <BudgetDemo initial={null} />
+        </div>
       </Card>
       <Card className="w-full max-w-[760px] p-[22px]" id="spot-your-bug">
         <CardHeader>

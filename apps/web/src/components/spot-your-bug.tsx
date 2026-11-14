@@ -77,8 +77,8 @@ export function SpotYourBug({ initial }: { initial: PublicDrill | null }) {
     return (
       <div className="flex flex-col items-start gap-3">
         <p className="text-13 text-ink-2">
-          You get one of your own accepted solutions with one line broken, the way you usually
-          break code. Find the line in 90 seconds.
+          You get one of your own accepted solutions with one line broken, the way you usually break
+          code. Find the line in 90 seconds.
         </p>
         <Button onClick={next} loading={pending}>
           <Crosshair size={14} aria-hidden="true" /> Start a drill

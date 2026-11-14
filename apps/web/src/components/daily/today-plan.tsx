@@ -48,6 +48,18 @@ export const KIND: Record<
   custom: { label: "Task", tone: "neutral" },
 };
 
+/** Each kind's colour on the time budget timeline, matching its badge. */
+const TONE_COLOR: Record<(typeof KIND)[PlanKind]["tone"], string> = {
+  revise: "var(--revise)",
+  primary: "var(--primary)",
+  medium: "var(--medium)",
+  info: "var(--info)",
+  signal: "var(--signal)",
+  success: "var(--success)",
+  hard: "var(--hard)",
+  neutral: "var(--ink-3)",
+};
+
 /** Rough minutes per item, for the time budget (a revision is quicker than a fresh medium). */
 function estimate(item: PlanItem): number {
   if (item.kind === "revision") return 15;
@@ -158,7 +170,6 @@ export function TodayPlanList({
   };
   const left = items.filter((i) => !i.done);
   const leftMin = left.reduce((n, i) => n + estimate(i), 0);
-  const ends = left.reduce<number[]>((acc, i) => [...acc, (acc.at(-1) ?? 0) + estimate(i)], []);
   const beyond = new Set<string>();
   let cutId: string | null = null;
   if (budget) {
@@ -411,7 +422,16 @@ export function TodayPlanList({
       </div>
 
       {!compact && left.length > 0 && (
-        <BudgetRibbon budget={budget} onChange={setBudget} ends={ends} leftMin={leftMin} />
+        <BudgetRibbon
+          budget={budget}
+          onChange={setBudget}
+          segments={left.map((i) => ({
+            title: i.title,
+            min: estimate(i),
+            color: TONE_COLOR[KIND[i.kind].tone],
+          }))}
+          leftMin={leftMin}
+        />
       )}
 
       <ul className="flex flex-col gap-1.5">
