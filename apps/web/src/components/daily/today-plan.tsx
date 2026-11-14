@@ -169,6 +169,8 @@ export function TodayPlanList({
     window.dispatchEvent(new Event(BUDGET_EVENT));
   };
   const left = items.filter((i) => !i.done);
+  // The item pointed at on the time budget or in the list: lit in both.
+  const [spot, setSpot] = useState<string | null>(null);
   const leftMin = left.reduce((n, i) => n + estimate(i), 0);
   const beyond = new Set<string>();
   let cutId: string | null = null;
@@ -426,11 +428,15 @@ export function TodayPlanList({
           budget={budget}
           onChange={setBudget}
           segments={left.map((i) => ({
+            id: i.id,
             title: i.title,
+            label: KIND[i.kind].label,
             min: estimate(i),
             color: TONE_COLOR[KIND[i.kind].tone],
           }))}
           leftMin={leftMin}
+          spot={spot}
+          onSpot={setSpot}
         />
       )}
 
@@ -442,6 +448,8 @@ export function TodayPlanList({
               if (el) rows.current.set(item.id, el);
               else rows.current.delete(item.id);
             }}
+            onMouseEnter={() => !item.done && setSpot(item.id)}
+            onMouseLeave={() => setSpot((v) => (v === item.id ? null : v))}
             onPointerDown={(e) => onSwipeDown(item, e)}
             onPointerMove={onSwipeMove}
             onPointerUp={(e) => onSwipeEnd(item, e.currentTarget)}
@@ -473,6 +481,7 @@ export function TodayPlanList({
               beyond.has(item.id) && "opacity-55",
               "group/item relative isolate flex touch-pan-y flex-wrap items-center gap-3 rounded-[12px] border border-transparent px-2.5 py-2 transition-colors hover:border-line hover:bg-surface-2/60 [&>*]:translate-x-[var(--dx,0px)]",
               item.id === currentId && "border-line bg-surface-2/60",
+              item.id === spot && "border-line-2 bg-surface-2/80",
               dragId === item.id &&
                 "z-10 scale-[1.015] border-line-2 bg-surface-2 shadow-e2 transition-[transform,box-shadow]",
               "first:[&>.rail]:top-1/2 last:[&>.rail]:bottom-1/2",

@@ -1275,3 +1275,29 @@ li[data-swipe="skip"]::after {
     animation: none;
   }
 }
+
+/* Today time budget: a block popping into your time, and values settling in. */
+@keyframes seg-pop {
+  0% {
+    transform: translateY(-50%) scaleY(1);
+  }
+  45% {
+    transform: translateY(-50%) scaleY(1.45);
+    filter: brightness(1.25);
+  }
+  100% {
+    transform: translateY(-50%) scaleY(1);
+  }
+}
+@keyframes budget-in {
+  from {
+    opacity: 0;
+    translate: 0 3px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  [class*="animate-[seg-pop"],
+  [class*="animate-[budget-in"] {
+    animation: none !important;
+  }
+}
